@@ -1,0 +1,114 @@
+/* ---- General layout ---------------------------------------------------------------------- */
+
+.chat {
+    margin-bottom: 1em
+}
+
+/* ---- Chat posts -------------------------------------------------------------------------- */
+
+.chat ul.chat__posts {
+    border: 1px solid var(--ck-color-base-border);
+    border-top-left-radius: var(--ck-border-radius);
+    border-top-right-radius: var(--ck-border-radius);
+    border-bottom: none;
+    margin: 1em 0 0;
+    padding: 1em;
+    list-style-position: inside;
+}
+
+.chat ul.chat__posts li {
+    display: flex;
+}
+
+.chat ul.chat__posts li.new-post {
+    /* Highlight a new post in the chat. */
+    animation: highlight 600ms ease-out;
+}
+
+.chat ul.chat__posts li + li {
+    margin-top: 1em;
+}
+
+.chat .chat__posts li .photo {
+    border-radius: 100%;
+    height: 40px;
+    margin-right: 1.5em;
+}
+
+.chat .chat__posts li .time {
+    color: hsl(0, 0%, 72%);
+    font-size: .9em;
+}
+
+.chat .chat__posts .chat__posts__post__message > strong::after,
+.chat__posts__post__mailto-user::after {
+    content: "•";
+    padding-left: 5px;
+    padding-right: 5px;
+    color: hsl(0, 0%, 72%);
+}
+
+@keyframes highlight {
+    0% {
+        background-color: yellow;
+    }
+
+    100% {
+        background-color: white;
+    }
+}
+
+/* ---- Chat editor ------------------------------------------------------------------------- */
+
+.chat .chat__editor {
+    /* Anti–FOUC (flash of unstyled content). */
+    padding: 1em;
+    border: 1px solid var(--ck-color-base-border);
+}
+
+.chat .chat__editor + .ck.ck-editor {
+    margin-top: 0;
+}
+
+.chat .chat__editor + .ck.ck-editor .ck.ck-toolbar {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* ---- In–editor mention list --------------------------------------------------------------- */
+
+.ck-mentions .mention__item {
+    display: block;
+}
+
+.ck-mentions .mention__item img {
+    border-radius: 100%;
+    height: 30px;
+}
+
+.ck-mentions .mention__item span {
+    margin-left: .5em;
+}
+
+.ck-mentions .mention__item.ck-on span {
+    color: var(--ck-color-base-background);
+}
+
+.ck-mentions .mention__item .mention__item__full-name {
+    color: hsl(0, 0%, 45%);
+}
+
+.ck-mentions .mention__item:hover:not(.ck-on) .mention__item__full-name {
+    color: hsl(0, 0%, 40%);
+}
+
+/* ---- Chat editor content styles ----------------------------------------------------------- */
+
+.chat .ck-content .mention {
+    background: unset;
+}
+
+.chat .ck.ck-content a,
+.chat .chat__posts a {
+    color: hsl(231, 89%, 53%);
+}
