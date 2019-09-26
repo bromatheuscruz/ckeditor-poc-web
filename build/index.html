@@ -25,14 +25,34 @@
                     <a href="./parameterized.html" class="btn btn-link">Parameterized</a>
                 </div>
             </div>
+            <div class="card">
+                <div class="card-header">
+                    Notifications
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="notification-box">
+                        
+                    </ul>
+                </div>
+                <div class="card-footer">
+
+                </div>
+            </div>
         </div>
     </div>
-    <script src="./bundle.js"></script>
-    <script src="./index.js"></script>
-    <!-- jQuery -->
+    <script src="../node_modules/socket.io-client/dist/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <!-- jQuery date format -->
+    <script>
+        const socket = io("http://localhost:3000");
+        socket.on("email:sent", message => addNotification(message));
 
+        function addNotification(message) {
+            const element = `<li class="list-group-item">
+                                <a href="${message}" class="btn-link">You have a new notification</a>
+                            </li>`;
+            $(element).appendTo("#notification-box");
+        }
+    </script>
 </body>
 
 </html>

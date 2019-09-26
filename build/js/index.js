@@ -1,13 +1,12 @@
-const commentPersonElementId = 'comment-person';
-const discardButtonElementId = 'discard-button';
-const longDateFormat  = 'dd/MM/yyyy HH:mm:ss';
+const commentPersonElementId = "comment-person";
+const discardButtonElementId = "discard-button";
 
 const getCustomCommentElement = () => {
-    return document.getElementById(commentPersonElementId);
+  return document.getElementById(commentPersonElementId);
 };
 
-const addCommentToCustomCommentBox = async (comment) => {
-    const template = `<div class="row">
+const addCommentToCustomCommentBox = async comment => {
+  const template = `<div class="row">
                         <div class="col-md-4">
                             <p>Matheus Cruz</p>
                         </div>
@@ -18,41 +17,37 @@ const addCommentToCustomCommentBox = async (comment) => {
                             ${comment.content}
                         </div>
                     </div>`;
-    
-    const customComment = getCustomCommentElement();
-    customComment.innerHTML = template;
 
-    await emailService(comment);
-    
+
+  const customComment = getCustomCommentElement();
+  customComment.innerHTML = template;
 };
 
-const emailService = async (comment) => {
-    const { userId } = comment;
-    console.log('userId', userId);
-    await $.post(`http://localhost:3000/users/${comment.userId}/send-email`, {
-        to: comment.to,
-        doc: comment.doc,
-        name: comment.name,
-        content: comment.content
-    })
+const emailService = email => {
+  $.ajax({
+    url: 'http://localhost:3000/email/notify',
+    dataType: 'JSON',
+    contentType: "application/json",
+    data: JSON.stringify(email),
+    method: 'POST'
+  });
 };
-
-const deleteComment = () => {
-    const customCommentElement = getCustomCommentElement();
-    customCommentElement.innerHTML = '';
-};
-
-document.getElementById(discardButtonElementId)
-    .addEventListener('click', function () {
-        deleteComment();
-});
 
 async function getParticipantsFromDocument(documentId) {
-    const data = await $.get(`http://localhost:3000/documents/${documentId}/participants`);
-    return data.participants;
+  const data = await $.get(
+    `http://localhost:3000/documents/${documentId}/participants`
+  );
+  return data.participants;
 }
 
 async function getTopicFromDocument(documentId, topicId) {
-    const data = await $.get(`http://localhost:3000/documents/${documentId}/topics/${topicId}`);
-    return data.topic;
+  const data = await $.get(
+    `http://localhost:3000/documents/${documentId}/topics/${topicId}`
+  );
+  return data.topic;
+}
+
+async function getAllReferences() {
+  const data = await $.get("http://localhost:3000/references");
+  return data.references;
 }

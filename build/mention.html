@@ -15,7 +15,8 @@
     <div class="container-fluid m-3 p-5">
         <h1 class="text-center">Proof of Concept</h1>
         <div class="text-center">
-            <a href="https://ckeditor.com/docs/ckeditor5/latest/index.html" class="btn btn-outline-primary">CKEditor
+            <a href="https://ckeditor.com/references/ckeditor5/latest/index.html"
+                class="btn btn-outline-primary">CKEditor
                 5</a>
         </div>
         <div class="row mt-5" style="justify-content: center;">
@@ -28,15 +29,34 @@
     </div>
     <div class="container mt-5">
         <h2>Mention Feature</h2>
-        <div class="card">
+        <div class="card mb-5">
             <div class="card-header">
                 Mention Feature
             </div>
             <div class="card-body">
-                <div id="mention-editor"></div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header text-center">
+                                    References
+                                </div>
+                                <div id="reference-box" class="card-body">
+
+                                </div>
+                                <div class="card-footer">
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div id="mention-editor"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-footer">
-                <div>
+                <div class="text-right">
                     <button id="button-edit" class="btn btn-primary" type="button">Edit</button>
                     <button id="button-save" class="btn btn-success radix-invisible" type="button">Save</button>
                     <button id="button-discard" class="btn btn-danger radix-invisible" type="button">Disard</button>
@@ -44,56 +64,33 @@
             </div>
         </div>
     </div>
-    <script src="./bundle.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="../node_modules//bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/bundle.js"></script>
+    <script src="js/index.js"></script>
     <script>
+        let appData = {};
         const { ClassicEditor: CKEDITOR5, Mention, Strikethrough } = ClassicEditor;
+        const licenseKey = 'gAneg2iaSnyxkbE+STUwVqPhttKKX9m9EA39S/YEOzz+N7n6q0i3MLc=';
 
-        const appData = {
-            initialData: `<p> Here is a sample from the the experiment: </p><table> <thead> <tr> <th></th> <th>English</th> <th>Japanese</th> </tr></thead> <tbody> <tr> <td>Real friends should</td><td>Be very frank</td><td>Help each other</td></tr><tr> <td>I will probably become</td><td>A teacher</td><td>A housewife</td></tr><tr> <td>When there is a conflict with family</td><td>I do what I want</td><td>It's a time of great unhappiness</td></tr></tbody> </table> <p> More recent <a href="https://books.google.pl/books?id=1LMhWGHGkRUC">studies</a> show, the language a person speaks affects their cognition, behaviour, emotions and hence <strong>their personality</strong>. This shouldn’t come as a surprise <a href="https://en.wikipedia.org/wiki/Lateralization_of_brain_function">since we already know</a> that different regions of the brain become more active depending on the person’s activity at hand. Since structure, information and especially <strong>the culture</strong> of languages varies substantially and the language a person speaks is an essential element of daily life. </p>`
-        }
-        
+        const mockDocumentId = '4efe54cc-fdeb-43b5-81ab-17f440eccfb9';
+        const mockTopicId = '1d8ea5dc-fb46-43af-a4e4-bac178989e94';
+        const mockSession = { user: { id: '4dfddafe-6f3c-4d34-88e3-4de6d12a40c1', name: 'Suellen Santos' } };
+
         const radixInvisibleClass = 'radix-invisible';
 
-        $.get('http://localhost:3000/docs', function (data) {
-            createMentionEditor(data.docs);
-        });
-
-        $('#button-edit').on('click', function () {
-            removeRadixInvisibleClass();
-            $(this).addClass(radixInvisibleClass);
-            changeReadOnlyProperty();
-        });
-
-        function changeReadOnlyProperty() {
-            window.mentionEditor.isReadOnly = !window.mentionEditor.isReadOnly;
-        }
-
-        function removeRadixInvisibleClass() {
-            $(`.${radixInvisibleClass}`).each((index, elem) => $(elem).removeClass(radixInvisibleClass));
-        }
-
-        function addRadixInvisibleClass(selectors) {
-            selectors.forEach(selector => $(selector).addClass(radixInvisibleClass));
-        }
-
-        $('#button-save').on('click', function () {
-            removeRadixInvisibleClass();
-            addRadixInvisibleClass(['.ck-toolbar', '#button-save', '#button-discard']);
-            changeReadOnlyProperty();
-
-            console.log(window.mentionEditor.getData());
-        });
-
-        $('#button-discard').on('click', function () {
-            removeRadixInvisibleClass();
-            addRadixInvisibleClass(['.ck-toolbar', '#button-save', '#button-discard']);
-            changeReadOnlyProperty();
-        });
-
-        const _licenseKey = 'gAneg2iaSnyxkbE+STUwVqPhttKKX9m9EA39S/YEOzz+N7n6q0i3MLc=';
-
         const editorElement = document.getElementById('mention-editor');
+
+        async function init() {
+
+            const topic = await getTopicFromDocument(mockDocumentId, mockTopicId);
+            const users = await getParticipantsFromDocument(topic.document.id);
+            const references = await getAllReferences();
+
+            appData.initialData = topic.data;
+
+            await createMentionEditor(references);
+        }
 
         function createMentionEditor(docs) {
             CKEDITOR5.create(editorElement, getEditorConfigurationWithDocs(docs))
@@ -114,7 +111,7 @@
                 toolbar: {
                     items: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', '|', 'undo', 'redo']
                 },
-                licenseKey: _licenseKey,
+                licenseKey,
                 mention: {
                     feeds: [
                         {
@@ -161,6 +158,8 @@
 
                     href = modelAttributeValue.link;
 
+                    initReferenceProcess(modelAttributeValue);
+
                     return viewWriter.createAttributeElement('a', {
                         class: 'mention',
                         'data-mention': modelAttributeValue.id,
@@ -171,6 +170,18 @@
                 },
                 converterPriority: 'high'
             });
+        };
+
+        function initReferenceProcess(model) {
+            addNewReferenceToReferenceBox(model);
+        };
+
+        function addNewReferenceToReferenceBox(model) {
+            const element = `<div reference doc-ref-id="${model.docId}">
+                                <a target="_blank" href="${model.link}" class="btn btn-block btn-link" data-toggle="tooltip" title="Technical name: ${model.technicalName}">${model.id}</a>
+                            </div>`;
+
+            $(element).appendTo('#reference-box');
         };
 
         function customItemRenderer(item) {
@@ -195,6 +206,38 @@
 
             return itemElement;
         };
+
+        function changeReadOnlyProperty() {
+            window.mentionEditor.isReadOnly = !window.mentionEditor.isReadOnly;
+        };
+
+        function removeRadixInvisibleClass() {
+            $(`.${radixInvisibleClass}`).each((index, elem) => $(elem).removeClass(radixInvisibleClass));
+        };
+
+        function addRadixInvisibleClass(selectors) {
+            selectors.forEach(selector => $(selector).addClass(radixInvisibleClass));
+        };
+
+        $('#button-edit').on('click', function () {
+            removeRadixInvisibleClass();
+            $(this).addClass(radixInvisibleClass);
+            changeReadOnlyProperty();
+        });
+
+        $('#button-save').on('click', function () {
+            removeRadixInvisibleClass();
+            addRadixInvisibleClass(['.ck-toolbar', '#button-save', '#button-discard']);
+            changeReadOnlyProperty();
+        });
+
+        $('#button-discard').on('click', function () {
+            removeRadixInvisibleClass();
+            addRadixInvisibleClass(['.ck-toolbar', '#button-save', '#button-discard']);
+            changeReadOnlyProperty();
+        });
+
+        init();
     </script>
 </body>
 

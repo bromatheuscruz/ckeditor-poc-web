@@ -69,88 +69,107 @@
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="./js/bundle.js"></script>
-    <script src="./js/index.js"></script>
     
-    <script src="./js/comments-plugin.js"></script>
+    <script src="js/bundle.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/comments-plugin.js"></script>
     <script>
-        const commentElementId = 'comment-id';
-        const mockDocumentId = '66c4ab1b-284e-4f5a-b18a-f83101d8ec0a';
-        const mockTopicId = 'e6af2373-b793-45c4-9fb4-98b79a574180';
-        const mockSession = { user: { id: '4dfddafe-6f3c-4d34-88e3-4de6d12a40c1', name: 'Suellen Santos'}}
-
+        const commentElementId = "comment-id";
+        const mockDocumentId = "4efe54cc-fdeb-43b5-81ab-17f440eccfb9";
+        const mockTopicId = "e6af2373-b793-45c4-9fb4-98b79a574180";
+        const mockSession = {
+            user: { id: "4dfddafe-6f3c-4d34-88e3-4de6d12a40c1", name: "Suellen Santos" }
+        };
+        
         var appData = {};
 
         async function init() {
             const topic = await getTopicFromDocument(mockDocumentId, mockTopicId);
             const users = await getParticipantsFromDocument(topic.document.id);
-            
+
             appData.userId = mockSession.user.id;
             appData.initialData = topic.data;
             appData.commentThreads = topic.commentThreads;
             appData.users = users;
 
-            await createCommentEditor()
+            await createCommentEditor();
         }
 
         async function createCommentEditor() {
-            const { ClassicEditor: Editor, Watchdog, Mention, Strikethrough, ClassicEditorBase } = ClassicEditor;
-            const licenseKey = 'gAneg2iaSnyxkbE+STUwVqPhttKKX9m9EA39S/YEOzz+N7n6q0i3MLc=';
+            const {
+                ClassicEditor: CKEDITOR5,
+                Watchdog,
+                Mention,
+                Strikethrough,
+                ClassicEditorBase
+            } = ClassicEditor;
+            const licenseKey = "gAneg2iaSnyxkbE+STUwVqPhttKKX9m9EA39S/YEOzz+N7n6q0i3MLc=";
 
             const watchdog = new Watchdog();
             window.watchdog = watchdog;
 
             watchdog.setCreator((el, config) => {
-                return Editor.create(el, config)
-                    .then(editor => {
-                        editor.plugins.get('CommentsOnly').isEnabled = false;
-                        const annotations = editor.plugins.get('Annotations');
-                        const sidebarElement = document.getElementById('comment-editor-sidebar');
-                        function refreshDisplayMode() {
-                            if (window.innerWidth < 1000) {
-                                sidebarElement.classList.remove('narrow');
-                                sidebarElement.classList.add('hidden');
-                                annotations.switchTo('inline');
-                            }
-                            else if (window.innerWidth < 1300) {
-                                sidebarElement.classList.remove('hidden');
-                                sidebarElement.classList.add('narrow');
-                                annotations.switchTo('narrowSidebar');
-                            }
-                            else {
-                                sidebarElement.classList.remove('hidden', 'narrow');
-                                annotations.switchTo('wideSidebar');
-                            }
+                return CKEDITOR5.create(el, config).then(editor => {
+                    editor.plugins.get("CommentsOnly").isEnabled = false;
+                    
+                    const annotations = editor.plugins.get("Annotations");
+                    const sidebarElement = document.getElementById("comment-editor-sidebar");
+
+                    function refreshDisplayMode() {
+                        if (window.innerWidth < 1000) {
+                            sidebarElement.classList.remove("narrow");
+                            sidebarElement.classList.add("hidden");
+                            annotations.switchTo("inline");
+                        } else if (window.innerWidth < 1300) {
+                            sidebarElement.classList.remove("hidden");
+                            sidebarElement.classList.add("narrow");
+                            annotations.switchTo("narrowSidebar");
+                        } else {
+                            sidebarElement.classList.remove("hidden", "narrow");
+                            annotations.switchTo("wideSidebar");
                         }
+                    }
 
-                        editor.ui.view.listenTo(window, 'beforeunload', (evt, domEvt) => {
-                            if (editor.plugins.get('PendingActions').hasAny) {
-                                domEvt.preventDefault();
-                                domEvt.returnValue = true;
-                            }
-                        });
-
-                        editor.ui.view.listenTo(window, 'resize', refreshDisplayMode);
-
-                        refreshDisplayMode();
-
-                        return editor;
+                    editor.ui.view.listenTo(window, "beforeunload", (evt, domEvt) => {
+                        if (editor.plugins.get("PendingActions").hasAny) {
+                            domEvt.preventDefault();
+                            domEvt.returnValue = true;
+                        }
                     });
+
+                    editor.ui.view.listenTo(window, "resize", refreshDisplayMode);
+
+                    refreshDisplayMode();
+
+                    return editor;
+                });
             });
+
+            function deleteComment() {
+                const customCommentElement = getCustomCommentElement();
+                customCommentElement.innerHTML = "";
+            }
+
+            document
+                .getElementById(discardButtonElementId)
+                .addEventListener("click", function () {
+                    deleteComment();
+                });
 
             watchdog.setDestructor(editor => editor.destroy());
 
-            watchdog.create(document.getElementById('comment-editor'), {
+            watchdog.create(document.getElementById("comment-editor"), {
                 initialData: appData.initialData,
                 extraPlugins: [CommentsIntegration],
                 licenseKey,
                 sidebar: {
-                    container: document.getElementById('comment-editor-sidebar')
+                    container: document.getElementById("comment-editor-sidebar")
                 }
             });
         }
-        
+
         init();
+
     </script>
 </body>
 
