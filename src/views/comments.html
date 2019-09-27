@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="../styles/ckeditor.css">
+    <title>POC</title>
+</head>
+
+<body>
+    <div class="container-fluid m-3 p-5">
+        <h1 class="text-center">Proof of Concept</h1>
+        <div class="text-center">
+            <a href="https://ckeditor.com/docs/ckeditor5/latest/index.html" class="btn btn-outline-primary">CKEditor
+                5- Docs</a>
+        </div>
+        <div class="row mt-5" style="justify-content: center;">
+            <div class="col-xs-12">
+                <a href="./comments.html" class="btn btn-link">Comments</a>
+                <a href="./mention.html" class="btn btn-link">Mention</a>
+                <a href="./parameterized.html" class="btn btn-link">Parameterized</a>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-5">
+        <h2>Comments Feature</h2>
+        <div class="row my-2">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header text-left">
+                        Custom Comments
+                    </div>
+                    <div class="card-body">
+                        <div class="container">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="container-fluid" id="comment-person">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header text-center">
+                        CKEditor 5 Comments
+                    </div>
+                    <div class="card-body">
+                        <div id="comment-editor-sidebar"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        Comments Feature
+                    </div>
+                    <div class="card-body">
+                        <div id="comment-editor" topic-id="d6806c04-f512-4be8-a5a0-6d6906476de1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="../js/ckeditor-bundle/bundle.js"></script>
+    <script src="../js/index.js"></script>
+    <script src="../js/service.js"></script>
+    <script src="../js/comment-integration-plugin.js"></script>
+
+    <script>
+        const commentElementId = 'comment-id';
+        const mockDocumentId = '66c4ab1b-284e-4f5a-b18a-f83101d8ec0a';
+        const mockTopicId = 'e6af2373-b793-45c4-9fb4-98b79a574180';
+        const mockSession = { user: { id: '4dfddafe-6f3c-4d34-88e3-4de6d12a40c1', name: 'Suellen Santos' } }
+
+        var appData = {};
+
+        async function init() {
+            const topic = await getTopicFromDocument(mockDocumentId, mockTopicId);
+            const users = await getParticipantsFromDocument(topic.document.id);
+            
+            window.topic = topic;
+
+            appData.userId = mockSession.user.id;
+            appData.initialData = topic.data;
+            appData.commentThreads = topic.commentThreads;
+
+            appData.commentThreads.forEach(thread => {
+                thread.comments.forEach(comment => {
+                    addCommentToCustomCommentBox(comment);
+                });
+            });
+
+            appData.users = users;
+
+            await createCommentEditor();
+        }
+
+        async function createCommentEditor() {
+            
+            const { ClassicEditor: Editor, Watchdog, Mention, Strikethrough, ClassicEditorBase } = ClassicEditor;
+            
+            const licenseKey = 'gAneg2iaSnyxkbE+STUwVqPhttKKX9m9EA39S/YEOzz+N7n6q0i3MLc=';
+
+            const watchdog = new Watchdog();
+
+            window.watchdog = watchdog;
+
+            watchdog.setCreator((el, config) => {
+                return Editor.create(el, config)
+                    .then(editor => {
+
+                        window.editor = editor;
+
+                        editor.plugins.get('CommentsOnly').isEnabled = true;
+                        
+                        const annotations = editor.plugins.get('Annotations');
+                        const sidebarElement = document.getElementById('comment-editor-sidebar');
+
+                        function refreshDisplayMode() {
+                            if (window.innerWidth < 1000) {
+                                sidebarElement.classList.remove('narrow');
+                                sidebarElement.classList.add('hidden');
+                                annotations.switchTo('inline');
+                            }
+                            else if (window.innerWidth < 1300) {
+                                sidebarElement.classList.remove('hidden');
+                                sidebarElement.classList.add('narrow');
+                                annotations.switchTo('narrowSidebar');
+                            }
+                            else {
+                                sidebarElement.classList.remove('hidden', 'narrow');
+                                annotations.switchTo('wideSidebar');
+                            }
+                        }
+
+                        editor.ui.view.listenTo(window, 'beforeunload', (evt, domEvt) => {
+                            if (editor.plugins.get('PendingActions').hasAny) {
+                                domEvt.preventDefault();
+                                domEvt.returnValue = true;
+                            }
+                        });
+
+                        editor.ui.view.listenTo(window, 'resize', refreshDisplayMode);
+
+                        refreshDisplayMode();
+
+                        return editor;
+                    });
+            });
+
+            watchdog.setDestructor(editor => editor.destroy());
+
+            watchdog.create(document.getElementById('comment-editor'), {
+                initialData: appData.initialData,
+                extraPlugins: [CommentsIntegration],
+                licenseKey,
+                sidebar: {
+                    container: document.getElementById('comment-editor-sidebar')
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
